@@ -110,6 +110,8 @@ setInterval(() => {
 
 Trigger server event.
 
+Note: contents of data is recursively inspected for [Transferable objects](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects). For large data, this can sometimes be intensive, so if an object contains an attribute `containsNoTransferables` that is set to `true`, transferable inspection (the `peekTransferables` function) will skip that object.
+
 ### WebRPC.Client
 
 #### `#constructor(options: { workers: Array<Worker> })`
