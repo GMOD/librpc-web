@@ -73,8 +73,12 @@ class RpcServer {
    * @protected
    */
   reply(uid, method, data) {
-    var transferables = peekTransferables(data)
-    self.postMessage({ uid, method, data, libRpc: true }, transferables)
+    try {
+      var transferables = peekTransferables(data)
+      self.postMessage({ uid, method, data, libRpc: true }, transferables)
+    } catch (e) {
+      this.throw(uid, serializeError(e))
+    }
   }
 
   /**
