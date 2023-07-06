@@ -21,9 +21,11 @@
     "url": "https://github.com/broadsw0rd"
   },
   "files": [
-    "dist"
+    "dist",
+    "esm"
   ],
   "main": "dist/index.js",
+  "module": "esm/index.js",
   "dependencies": {
     "@librpc/ee": "1.0.4",
     "serialize-error": "^8.1.0"
@@ -38,7 +40,9 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc --outDir esm",
+    "build:cjs": "tsc --module commonjs --outDir dist",
     "test": "jest",
     "preversion": "npm test && npm run build",
     "postversion": "git push --follow-tags"
