@@ -1,5 +1,6 @@
+//@ts-nocheck
 /* eslint-env serviceworker */
-import { peekTransferables } from './utils.js'
+import { peekTransferables } from './utils'
 import { serializeError } from 'serialize-error'
 
 /**

@@ -1,3 +1,4 @@
+//@ts-nocheck
 var EventEmitter = require('events')
 
 import WebRPC from '../src/'

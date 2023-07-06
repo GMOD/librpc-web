@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /**
  * Ensure that passed value is object
  * @param  {*}       object Value to check

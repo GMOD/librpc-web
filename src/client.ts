@@ -1,5 +1,6 @@
+//@ts-nocheck
 import EventEmitter from '@librpc/ee'
-import { peekTransferables, uuid } from './utils.js'
+import { peekTransferables, uuid } from './utils'
 import { deserializeError } from 'serialize-error'
 
 class RpcClient extends EventEmitter {
