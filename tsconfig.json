@@ -7,7 +7,6 @@
     "lib": ["dom", "esnext"],
     "declaration": true,
     "moduleResolution": "node",
-    "inlineSourceMap": true,
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
