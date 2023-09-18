@@ -1,7 +1,8 @@
-//@ts-nocheck
 /* eslint-env serviceworker */
 import { peekTransferables } from './utils'
-import { serializeError } from 'serialize-error'
+import { ErrorObject, serializeError } from 'serialize-error'
+
+type Procedure = (data: unknown) => Promise<unknown>
 
 /**
  * @callback Procedure
@@ -9,13 +10,29 @@ import { serializeError } from 'serialize-error'
  * @return {(Promise|*)}
  */
 
+interface RpcEvent {
+  /** Event data */
+  data: {
+    /** Procedure name */
+    method: string
+    /** Unique id of rpc call */
+    uid: string
+    /** True/false flag of whether the message is handled by this library */
+    libRpc: true
+    /** Procedure params */
+    data: unknown
+  }
+}
+
 class RpcServer {
+  protected methods: Record<string, Procedure>
+
   /**
    * Every passed method becomes remote procedure.
    * It can return Promise if it is needed.
    * Only ArrayBuffers will be transferred automatically (not TypedArrays).
    * Errors thrown by procedures would be handled by server.
-   * @param {Object.<string, Procedure>} methods Dictionary of remote procedures
+   * @param methods - Dictionary of remote procedures
    * @example
    *
    * var server = new RpcServer({
@@ -26,30 +43,23 @@ class RpcServer {
    *   pow ({ x, y }) { return x ** y }
    * })
    */
-  constructor(methods) {
+  constructor(methods: Record<string, Procedure>) {
     this.methods = methods
     this.listen()
   }
 
   /**
    * Subscribtion to "message" events
-   * @protected
    */
-  listen() {
+  protected listen() {
     self.addEventListener('message', this.handler.bind(this))
   }
 
   /**
    * Handle "message" events, invoke remote procedure if it possible
-   * @param {Event}   e             Message event object
-   * @param {Object}  e.data        Event data
-   * @param {string}  e.data.method Procedure name
-   * @param {number}  e.data.uid    Unique id of rpc call
-   * @param {boolean} e.data.libRpc True/false flag of whether the message is handled by this library
-   * @param {*}       e.data.data   Procedure params
-   * @protected
+   * @param e - Message event object
    */
-  handler(e) {
+  protected handler(e: RpcEvent) {
     var { libRpc, method, uid, data } = e.data
 
     if (!libRpc) return // ignore non-librpc messages
@@ -68,12 +78,11 @@ class RpcServer {
 
   /**
    * Reply to remote call
-   * @param {number} uid    Unique id of rpc call
-   * @param {string} method Procedure name
-   * @param {*}      data   Call result, could be any data
-   * @protected
+   * @param uid - Unique id of rpc call
+   * @param method - Procedure name
+   * @param data - Call result, could be any data
    */
-  reply(uid, method, data) {
+  protected reply(uid: string, method: string, data: unknown) {
     try {
       var transferables = peekTransferables(data)
       self.postMessage({ uid, method, data, libRpc: true }, transferables)
@@ -84,26 +93,25 @@ class RpcServer {
 
   /**
    * Throw error
-   * @param {number} uid   Unique id of rpc call
-   * @param {string} error Error description
-   * @protected
+   * @param uid - Unique id of rpc call
+   * @param error - Error description
    */
-  throw(uid, error) {
+  protected throw(uid: string, error: ErrorObject | string) {
     self.postMessage({ uid, error, libRpc: true })
   }
 
   /**
    * Trigger server event
    * Only ArrayBuffers will be transferred automatically (not TypedArrays).
-   * @param {string} eventName Event name
-   * @param {*}      data      Any data
+   * @param eventName - Event name
+   * @param data - Any data
    * @example
    *
    * setInterval(() => {
    *   server.emit('update', Date.now())
    * }, 50)
    */
-  emit(eventName, data) {
+  emit(eventName: string, data: unknown) {
     var transferables = peekTransferables(data)
 
     self.postMessage({ eventName, data, libRpc: true }, transferables)

@@ -1,20 +1,18 @@
-//@ts-nocheck
-
 /**
  * Ensure that passed value is object
- * @param  {*}       object Value to check
- * @return {boolean}        Check result
+ * @param object Value to check
+ * @returns Check result
  */
-export function isObject(object) {
+export function isObject(object: any): object is Record<string, unknown> {
   return Object(object) === object
 }
 
 /**
  * Ensure that passed value could be transfer
- * @param  {*}       object Value to check
- * @return {boolean}        Check result
+ * @param object - Value to check
+ * @returns Check result
  */
-export function isTransferable(object) {
+export function isTransferable(object: any): object is Transferable {
   try {
     return (
       object instanceof ArrayBuffer ||
@@ -29,14 +27,14 @@ export function isTransferable(object) {
 
 /**
  * Recursively peek transferables from passed data
- * @param  {*}             data        Data source
+ * @param data - Data source
  * @param  {Array}         [result=[]] Dist array
- * @return {ArrayBuffer[]}             List of transferables objects
+ * @returns  List of transferables objects
  */
-export function peekTransferables(data, result = []) {
+export function peekTransferables(data: unknown, result: Transferable[] = []) {
   if (isTransferable(data)) {
     result.push(data)
-  } else if (isObject(data) && !data.containsNoTransferables) {
+  } else if (isObject(data) && !('containsNoTransferables' in data)) {
     for (var i in data) {
       peekTransferables(data[i], result)
     }
@@ -45,7 +43,7 @@ export function peekTransferables(data, result = []) {
 }
 
 /**
- * @return {string} Uniq uid
+ * @returns Uniq uid
  */
 export function uuid() {
   return Math.floor((1 + Math.random()) * 1e10).toString(16)
