@@ -21,7 +21,7 @@ interface RpcEvent {
     /** Server event name */
     eventName?: string
     /** Procedure result or event data */
-    data: unknown
+    data: any
   }
 }
 
@@ -30,15 +30,11 @@ interface RpcErrorEvent extends ErrorEvent {
   libRpc?: boolean
 }
 
-interface RpcCallOptions {
-  /** Wait timeout */
-  timeout?: number
-}
 
 export default class RpcClient extends EventEmitter {
   workers: Worker[]
   protected idx = 0
-  protected calls: Record<string, (data: unknown) => void> = {}
+  protected calls: Record<string, (data: any) => void> = {}
   protected timeouts: Record<string, NodeJS.Timeout> = {}
   protected errors: Record<string, (error: Error) => void> = {}
 
@@ -121,7 +117,7 @@ export default class RpcClient extends EventEmitter {
    * @param uid - Remote call uid
    * @param data - Response data
    */
-  protected resolve(uid: string, data: unknown) {
+  protected resolve(uid: string, data: any) {
     if (this.calls[uid]) {
       this.calls[uid](data)
       this.clear(uid)
@@ -150,7 +146,7 @@ export default class RpcClient extends EventEmitter {
    * @param options - Options
    * @returns Remote procedure promise
    */
-  call(method: string, data: unknown, { timeout = 2000 }: RpcCallOptions = {}) {
+  call(method: string, data: any, { timeout = 2000 }: any = {}) {
     var uid = uuid()
     var transferables = peekTransferables(data)
     return new Promise((resolve, reject) => {

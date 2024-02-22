@@ -20,7 +20,7 @@ export default class EventEmitter {
    *
    * emitter.on('event', listener)
    */
-  on(event: string, listener: EventListener) {
+  on(event: string, listener: (arg: unknown) => void) {
     var listeners = this.events[event]
 
     if (!listeners) {
@@ -42,7 +42,7 @@ export default class EventEmitter {
    *
    * emitter.off('event', listener)
    */
-  off(event: string, listener: EventListener) {
+  off(event: string, listener: (arg: unknown) => void) {
     var listeners = this.events[event]
 
     if (listeners) {
@@ -64,7 +64,7 @@ export default class EventEmitter {
    *
    * emitter.emit('event', { foo: 'bar' })
    */
-  emit(event: string, data: unknown) {
+  emit(event: string, data: any) {
     var listeners = this.events[event]
 
     if (listeners) {
