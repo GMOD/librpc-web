@@ -1,21 +1,55 @@
-//@ts-nocheck
 import EventEmitter from '@librpc/ee'
 import { peekTransferables, uuid } from './utils'
 import { deserializeError } from 'serialize-error'
 
+interface RpcClientOptions {
+  /** List of server workers */
+  workers: Worker[]
+}
+
+interface RpcEvent {
+  /** Message event data */
+  data: {
+    /** Remote call uid */
+    uid: string
+    /** `true` flag */
+    libRpc: true
+    /** Error description */
+    error?: string
+    /** Remote procedure name */
+    method?: string
+    /** Server event name */
+    eventName?: string
+    /** Procedure result or event data */
+    data: unknown
+  }
+}
+
+interface RpcErrorEvent extends ErrorEvent {
+  /** Error ignored if this is not true */
+  libRpc?: boolean
+}
+
+interface RpcCallOptions {
+  /** Wait timeout */
+  timeout?: number
+}
+
 class RpcClient extends EventEmitter {
+  workers: Worker[]
+  protected idx = 0
+  protected calls: Record<string, (data: unknown)=> void> = {}
+  protected timeouts: Record<string, NodeJS.Timeout> = {}
+  protected errors: Record<string, (error: Error) => void> = {}
+
   /**
    * Client could be connected to several workers for better CPU utilization.
    * Requests are sent to an exact worker by round robin algorithm.
-   * @param {WebWorker[]} options.workers List of server workers
+   * @param options - Rpc Client options
    */
-  constructor({ workers }) {
+  constructor({ workers }: RpcClientOptions) {
     super()
     this.workers = [...workers]
-    this.idx = 0
-    this.calls = {}
-    this.timeouts = {}
-    this.errors = {}
     this.handler = this.handler.bind(this)
     this.catch = this.catch.bind(this)
     this.init()
@@ -23,35 +57,25 @@ class RpcClient extends EventEmitter {
 
   /**
    * Subscribtion to web workers events
-   * @protected
    */
-  init() {
+  protected init() {
     this.workers.forEach(this.listen, this)
   }
 
   /**
    * Subsrciption to exact worker
-   * @param {WebWorker} worker Server worker
-   * @proteced
+   * @param worker - Server worker
    */
-  listen(worker) {
+  protected listen(worker: Worker) {
     worker.addEventListener('message', this.handler)
     worker.addEventListener('error', this.catch)
   }
 
   /**
    * Message handler
-   * @param {Event}   e               Event object
-   * @param {Object}  e.data          Message event data
-   * @param {number}  e.data.uid      Remote call uid
-   * @param {boolean} e.data.libRpc   `true` flag
-   * @param {string}  [e.data.error]  Error discription
-   * @param {string}  [e.data.method] Remote procedure name
-   * @param {string}  [e.data.event]  Server event name
-   * @param {*}       [e.data.data]   Procedure result or event data
-   * @protected
+   * @param e - Event object
    */
-  handler(e) {
+  protected handler(e: RpcEvent) {
     var { uid, error, method, eventName, data, libRpc } = e.data
 
     if (!libRpc) return // ignore non-librpc messages
@@ -68,13 +92,9 @@ class RpcClient extends EventEmitter {
   /**
    * Error handler
    * https://www.nczonline.net/blog/2009/08/25/web-workers-errors-and-debugging/
-   * @param  {string}  options.message  Error message
-   * @param  {number}  options.lineno   Line number
-   * @param  {string}  options.filename Filename
-   * @param  {boolean} options.libRpc   Error ignored if this is not true
-   * @protected
+   * @param options - Error handler options
    */
-  catch({ message, lineno, filename, libRpc }) {
+  catch({ message, lineno, filename, libRpc }: RpcErrorEvent) {
     if (libRpc) {
       this.emit('error', {
         message,
@@ -86,11 +106,10 @@ class RpcClient extends EventEmitter {
 
   /**
    * Handle remote procedure call error
-   * @param {string} uid   Remote call uid
-   * @param {strint} error Error message
-   * @protected
+   * @param uid - Remote call uid
+   * @param error - Error message
    */
-  reject(uid, error) {
+  protected reject(uid: string, error: string | Error) {
     if (this.errors[uid]) {
       this.errors[uid](deserializeError(error))
       this.clear(uid)
@@ -99,11 +118,10 @@ class RpcClient extends EventEmitter {
 
   /**
    * Handle remote procedure call response
-   * @param {string} uid  Remote call uid
-   * @param {*}      data Response data
-   * @protected
+   * @param uid - Remote call uid
+   * @param data - Response data
    */
-  resolve(uid, data) {
+  protected resolve(uid: string, data: unknown) {
     if (this.calls[uid]) {
       this.calls[uid](data)
       this.clear(uid)
@@ -112,10 +130,9 @@ class RpcClient extends EventEmitter {
 
   /**
    * Clear inner references to remote call
-   * @param {string} uid Remote call uid
-   * @protected
+   * @param uid - Remote call uid
    */
-  clear(uid) {
+  protected clear(uid: string) {
     clearTimeout(this.timeouts[uid])
     delete this.timeouts[uid]
     delete this.calls[uid]
@@ -128,13 +145,12 @@ class RpcClient extends EventEmitter {
    * - it happened during procedure
    * - you try to call an unexisted procedure
    * - procedure execution takes more than timeout
-   * @param  {string}     method                 Remote procedure name
-   * @param  {*}          data                   Request data
-   * @param  {Object}     [options]              Options
-   * @param  {number}     [options.timeout=2000] Wait timeout
-   * @return {Promise<*>}                        Remote procedure promise
+   * @param method - Remote procedure name
+   * @param data - Request data
+   * @param options - Options
+   * @returns Remote procedure promise
    */
-  call(method, data, { timeout = 2000 } = {}) {
+  call(method: string, data: unknown, { timeout = 2000 }: RpcCallOptions = {}) {
     var uid = uuid()
     var transferables = peekTransferables(data)
     return new Promise((resolve, reject) => {

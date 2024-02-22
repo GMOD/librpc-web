@@ -4,12 +4,13 @@
     "outDir": "dist",
     "target": "es2018",
     "types": ["node", "jest"],
-    "lib": ["dom", "esnext"],
+    "lib": ["dom", "esnext", "webworker"],
     "declaration": true,
     "moduleResolution": "node",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
   }
 }
