@@ -3,7 +3,7 @@ import RpcServer from './server'
 
 export default {
   Client: RpcClient,
-  Server: RpcServer,
+  Server: RpcServer
 }
-
 export type { RpcClient, RpcServer }
+

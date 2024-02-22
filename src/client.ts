@@ -32,7 +32,7 @@ interface RpcErrorEvent extends ErrorEvent {
 
 
 export default class RpcClient extends EventEmitter {
-  workers: Worker[]
+  public workers: Worker[]
   protected idx = 0
   protected calls: Record<string, (data: any) => void> = {}
   protected timeouts: Record<string, NodeJS.Timeout> = {}
