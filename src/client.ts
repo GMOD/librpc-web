@@ -1,4 +1,4 @@
-import EventEmitter from '@librpc/ee'
+import EventEmitter from './ee'
 import { peekTransferables, uuid } from './utils'
 import { deserializeError } from 'serialize-error'
 
@@ -35,10 +35,10 @@ interface RpcCallOptions {
   timeout?: number
 }
 
-class RpcClient extends EventEmitter {
+export default class RpcClient extends EventEmitter {
   workers: Worker[]
   protected idx = 0
-  protected calls: Record<string, (data: unknown)=> void> = {}
+  protected calls: Record<string, (data: unknown) => void> = {}
   protected timeouts: Record<string, NodeJS.Timeout> = {}
   protected errors: Record<string, (error: Error) => void> = {}
 
@@ -173,4 +173,3 @@ class RpcClient extends EventEmitter {
   }
 }
 
-export default RpcClient

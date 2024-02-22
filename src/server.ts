@@ -24,7 +24,7 @@ interface RpcEvent {
   }
 }
 
-class RpcServer {
+export default class RpcServer {
   protected methods: Record<string, Procedure>
 
   /**
@@ -118,4 +118,3 @@ class RpcServer {
   }
 }
 
-export default RpcServer
