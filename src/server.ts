@@ -1,4 +1,6 @@
-import { ErrorObject, serializeError } from './serializeError/index.ts'
+import { serializeError } from './serializeError/index.ts'
+
+import type { ErrorObject} from './serializeError/index.ts'
 
 function isTransferable(object: unknown): object is Transferable {
   try {
